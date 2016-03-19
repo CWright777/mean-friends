@@ -1,0 +1,63 @@
+<html ng-app="friends_app">
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    var friends_app = angular.module('friends_app', [])
+
+    friends_app.factory('FriendFactory', function($http){
+      var factory = {};
+      var friends = [];
+
+      factory.index = function(callback){
+        $http.get('/friends').success(function(output){
+          friends = output
+          callback(friends)
+        })
+      }
+      factory.addFriend = function(newFriend, callback){
+        $http.post('/friends').success(function(){
+          friends.push({name: newFriend.name, age: newFriend.age});
+        })
+      }
+      factory.removeFriend = function(friend, callback){
+        friends.splice(friends.indexOf(friend),1)
+      }
+      return factory
+    })
+
+  friends_app.controller('FriendsController', function($scope, FriendFactory){
+    $scope.addFriend = function(){
+      FriendFactory.addFriend($scope.newFriend, function(){
+        $scope.friends = FriendFactory.index();
+        $scope.newFriend = {};
+      })
+    }
+    $scope.index = function(){
+      FriendFactory.index(function(data){
+        $scope.friends = data;
+        $scope.newFriend = {};
+      });
+    }
+    $scope.index();
+    $scope.removeFriend = function(friend){
+      FriendFactory.removeFriend(friend, function(friends){
+        $scope.friends = friends
+      })
+    }
+  })
+  </script>
+</head>
+<body ng-controller="FriendsController">
+  <h1>Friends</h1>
+  <input type="text" ng-model="filter_name" placeholder="filter">
+  {{filter_name}}
+  <ul>
+    <li ng-repeat="friend in friends | filter: filter_name">
+      {{friend.name}}, {{friend.age}}  <button ng-click='removeFriend(friend)'>Delete</button>    </li>
+  </ul>
+  <h1>Add a Friend</h1>
+  <input type="text" ng-model="newFriend.name" placeholder="name">
+  <input type="text" ng-model="newFriend.age" placeholder="age">
+  <input type="submit" ng-click="addFriend()">
+</body>
+</html>
